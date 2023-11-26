@@ -142,6 +142,7 @@
     "__type__": "f0bddqrY01EO6u5wIXTfP6Y",
     "_name": "",
     "_objFlags": 0,
+    "__editorExtras__": {},
     "node": {
       "__id__": 1
     },
@@ -149,7 +150,7 @@
     "__prefab": {
       "__id__": 7
     },
-    "_id": "00W1ImEBdKbacYKk3/JokX"
+    "_id": ""
   },
   {
     "__type__": "cc.CompPrefabInfo",
