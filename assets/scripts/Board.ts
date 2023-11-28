@@ -18,7 +18,24 @@ export class Board extends Component {
 
     /** 格子的大小, 这里写死了 */
     private _cell_size: Vec2 = v2(100, 100)
-
+    private _select_cell:Cell|null = null;
+    /**
+     * 设置选中的棋子
+     */
+    public set select_cell(cell: Cell|null) {
+        if(this._select_cell != null) // 已经有选中的了, 就停止播放它的动画
+            this._select_cell.piece.unselected();
+        this._select_cell = cell;
+        if(cell != null)
+            this._select_cell.piece.selected();
+        
+    }
+    /**
+     * 获取选中的棋子
+     */
+    public get select_cell():Cell|null {
+        return this._select_cell;
+    }
 
     start() {
         this.initBoard();
@@ -39,11 +56,25 @@ export class Board extends Component {
                 y = (j + 1) * this._cell_size.y; // + this.cell_spacing)
                 temp_cell.setPosition(x, y);
                 temp_cell.getComponent(Cell).coordinate = v2(i, j);
+                temp_cell.on('ON_PRESSEN', this._on_cell_pressed.bind(this));
             }
         }
         this.spawRandomPiece()
     }
 
+    /**
+     * 格子点击事件的回调方法
+     * @param cell 是点击的那个格子
+     */
+    _on_cell_pressed(cell: Cell) {
+        // console.log(`_on_cell_pressed -> 当前点击的格子: ${cell.coordinate}`);
+        if(cell.piece != null) {
+            console.log(`_on_cell_pressed 更换选中棋子`)
+            this.select_cell = cell;
+        } else if(this.select_cell != null) {
+            console.log(`_on_cell_pressed -> 执行移动操作`)
+        }
+    }
     /** 
      * # 在随机位置生成3个棋子
      */
@@ -67,9 +98,9 @@ export class Board extends Component {
         if (this.hasPiece(coordinate)) return this.spawOnePiece();
         // - 判断这个坐标上有没有棋子
         const cell = this.getCell(coordinate);
-        const piece = instantiate(this.piece_prefab);
+        const piece = instantiate(this.piece_prefab).getComponent(Piece);
         cell.piece = piece;
-        piece.getComponent(Piece).piece_type = randomRangeInt(0, pieceType);
+        piece.piece_type = randomRangeInt(0, pieceType);
     }
 
     /**
