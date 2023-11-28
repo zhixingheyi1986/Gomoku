@@ -31,12 +31,12 @@ export class Board extends Component {
         let x: number = 0, y: number = 0;
 
         if (this.cell_prefab == null) return;
-        for (let i = 0; i < this.column; i++) {
-            for (let j = 0; j < this.row; j++) {
+        for (let i = 0; i < this.row; i++) {
+            for (let j = 0; j < this.column; j++) {
                 let temp_cell: Node = instantiate(this.cell_prefab);
                 this.node.addChild(temp_cell);
-                x = (i + 1) * (this._cell_size.x + this.cell_spacing);
-                y = (j + 1) * (this._cell_size.y + this.cell_spacing)
+                x = (i + 1) * this._cell_size.x;
+                y = (j + 1) * this._cell_size.y; // + this.cell_spacing)
                 temp_cell.setPosition(x, y);
                 temp_cell.getComponent(Cell).coordinate = v2(i, j);
             }
@@ -55,6 +55,7 @@ export class Board extends Component {
 
     /**
      * # 随机生成一个棋子
+     * @param pieceType 棋子的种类数量
      */
     spawOnePiece(pieceType: number = 5) {
         // - 随机出一个坐标
@@ -67,7 +68,7 @@ export class Board extends Component {
         // - 判断这个坐标上有没有棋子
         const cell = this.getCell(coordinate);
         const piece = instantiate(this.piece_prefab);
-        cell.getComponent(Cell).piece = piece;
+        cell.piece = piece;
         piece.getComponent(Piece).piece_type = randomRangeInt(0, pieceType);
     }
 
@@ -78,7 +79,7 @@ export class Board extends Component {
      */
     hasPiece(coordinate: Vec2): boolean {
         const cell = this.getCell(coordinate);
-        return cell.getComponent(Cell).piece != null;
+        return cell.piece != null;
     }
 
     /**
@@ -86,9 +87,9 @@ export class Board extends Component {
      * @param coordinate 
      * @returns 
      */
-    getCell(coordinate: Vec2): Node {
+    getCell(coordinate: Vec2): Cell {
         const index = coordinate.x * this.row + coordinate.y;
-        return this.node.children[index];
+        return this.node.children[index].getComponent(Cell);
     }
 }
 
