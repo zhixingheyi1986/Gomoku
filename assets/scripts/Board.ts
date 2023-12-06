@@ -1,7 +1,8 @@
-import { _decorator, CCClass, CCInteger, Component, instantiate, Node, Prefab, randomRangeInt, v2, Vec2 } from 'cc';
+import { _decorator, CCClass, CCInteger, Component, instantiate, Label, log, Node, Prefab, randomRangeInt, v2, Vec2 } from 'cc';
 const { ccclass, property } = _decorator;
 import { Cell } from './Cell';
 import { Piece } from './Piece';
+import { Astar, GridNode } from './utils/Utils';
 
 @ccclass('Board')
 export class Board extends Component {
@@ -16,6 +17,9 @@ export class Board extends Component {
     @property({ type: CCInteger, displayName: '棋盘行数' })
     row: number = 9;
 
+
+    private _GridNode:GridNode[][] = [];
+    private _astar:Astar = null;
     /** 格子的大小, 这里写死了 */
     private _cell_size: Vec2 = v2(100, 100)
     private _select_cell:Cell|null = null;
@@ -49,16 +53,21 @@ export class Board extends Component {
 
         if (this.cell_prefab == null) return;
         for (let i = 0; i < this.row; i++) {
+            this._GridNode.push(new Array(this.column));
             for (let j = 0; j < this.column; j++) {
                 let temp_cell: Node = instantiate(this.cell_prefab);
                 this.node.addChild(temp_cell);
                 x = (i + 1) * this._cell_size.x;
                 y = (j + 1) * this._cell_size.y; // + this.cell_spacing)
                 temp_cell.setPosition(x, y);
-                temp_cell.getComponent(Cell).coordinate = v2(i, j);
+                const pos = v2(i, j);
+                temp_cell.getComponent(Cell).coordinate = pos;
                 temp_cell.on('ON_PRESSEN', this._on_cell_pressed.bind(this));
+                temp_cell.getComponent(Cell).lbstr = `${i}x${j}`;
+                this._GridNode[i][j] = new GridNode(pos);
             }
         }
+        this._astar = new Astar(this._GridNode);
         this.spawRandomPiece()
     }
 
@@ -69,14 +78,30 @@ export class Board extends Component {
     _on_cell_pressed(cell: Cell) {
         // console.log(`_on_cell_pressed -> 当前点击的格子: ${cell.coordinate}`);
         if(cell.piece != null) {
-            console.log(`_on_cell_pressed 更换选中棋子`)
             this.select_cell = cell;
         } else if(this.select_cell != null) {
-            console.log(`_on_cell_pressed -> 执行移动操作`)
+            // TODO: 点击的是空白格子,就进行寻路并移动
+            //let paths = this._a_star.findPath(this.grid[cell.coordinate.x][cell.coordinate.y], this.grid[this.select_cell.coordinate.x][this.select_cell.coordinate.y])
+            const startNode:GridNode = this._GridNode[this.select_cell.coordinate.x][this.select_cell.coordinate.y];
+            const endNode:GridNode = this._GridNode[cell.coordinate.x][cell.coordinate.y];
+            const paths = this._astar.findPath(startNode, endNode);
+            if(paths != null) {
+                console.log(`路径: ${paths}`)
+                //const temp_cell = this.getCell(v2(1, 4));
+                //temp_cell.background = true;
+                //const temp_cell2 = this.getCell(v2(4, 1));
+                //temp_cell2.background = true;
+                 for(const pos of paths) {
+                     const temp_cell = this.getCell(pos);
+                     temp_cell.background = true;
+                 }
+            } else {
+                console.log(`没有找到路径`);
+            }
         }
     }
     /** 
-     * # 在随机位置生成3个棋子
+     * 在随机位置生成3个棋子
      */
     spawRandomPiece() {
         for (let i = 0; i < 3; i++) {
@@ -101,6 +126,8 @@ export class Board extends Component {
         const piece = instantiate(this.piece_prefab).getComponent(Piece);
         cell.piece = piece;
         piece.piece_type = randomRangeInt(0, pieceType);
+        console.log(`随机生成棋子的位置: ${coordinate}, 显示位置: ${cell.coordinate}`);
+        this._GridNode[cell.coordinate.x][cell.coordinate.y].walkable = false;
     }
 
     /**
@@ -119,7 +146,7 @@ export class Board extends Component {
      * @returns 
      */
     getCell(coordinate: Vec2): Cell {
-        const index = coordinate.x * this.row + coordinate.y;
+        const index = coordinate.x * this.column + coordinate.y;
         return this.node.children[index].getComponent(Cell);
     }
 }

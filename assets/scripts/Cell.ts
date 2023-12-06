@@ -1,4 +1,4 @@
-import { _decorator, Component, EventTarget, EventTouch, Input, input, Node, Vec2 } from 'cc';
+import { _decorator, Color, Component, EventTarget, EventTouch, Input, input, Label, Node, Sprite, Vec2 } from 'cc';
 import { Piece } from './Piece';
 const { ccclass, property } = _decorator;
 /**
@@ -6,6 +6,16 @@ const { ccclass, property } = _decorator;
  */
 @ccclass('Cell')
 export class Cell extends Component {
+    @property({type:Sprite})
+    bg: Sprite = null;
+    @property({type:Label})
+    lb:Label = null;
+    public set lbstr(str:string) {
+        this.lb.string = str;
+    }
+    public set background(isHight: boolean) {
+        this.bg.color = isHight ? new Color(0x9F9CA2) : new Color(0x4B494D);
+    }
     private _piece: Piece = null;
     /**
      * 设置当前格子上的棋子
